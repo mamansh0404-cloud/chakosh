@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>چکش | سامانه مزایده آنلاین</title>
+    <style>
+        :root { --primary: #f59e0b; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --muted: #94a3b8; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; padding-bottom: 80px; }
+        header { background: var(--card); padding: 14px; border-radius: 12px; text-align: center; margin-bottom: 16px; border: 1px solid #334155; }
+        header h1 { color: var(--primary); font-size: 1.3rem; }
+        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid #334155; }
+        .btn { background: var(--primary); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 1rem; }
+        .btn-sec { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        input { width: 100%; padding: 12px; margin: 8px 0 14px 0; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; }
+        .timer { color: #ef4444; font-weight: bold; font-family: monospace; }
+        nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid #334155; }
+        nav button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.9rem; }
+        nav button.active { color: var(--primary); font-weight: bold; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <header><h1>🔨 چکش — سامانه مزایده آنلاین</h1></header>
+
+    <div id="v-home">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3>مزایده‌های جاری</h3>
+            <button class="btn" style="width:auto; padding:6px 12px;" onclick="tab('create')">+ ثبت مزایده</button>
+        </div>
+        <div id="list"></div>
+    </div>
+
+    <div id="v-detail" class="hidden">
+        <button class="btn btn-sec" style="margin-bottom:12px;" onclick="tab('home')">← بازگشت</button>
+        <div id="detail"></div>
+    </div>
+
+    <div id="v-create" class="hidden">
+        <h3>ثبت کالای جدید</h3>
+        <form onsubmit="create(event)">
+            <label>نام کالا:</label><input id="ct" required placeholder="مثلاً ساعت هوشمند">
+            <label>قیمت پایه (تومان):</label><input type="number" id="cp" required placeholder="مثلاً 5000000">
+            <label>مدت زمان (دقیقه):</label><input type="number" id="cd" value="10" required>
+            <button class="btn" type="submit">انتشار مزایده</button>
+        </form>
+    </div>
+
+    <div id="v-prof" class="hidden">
+        <h3>حساب کاربری</h3>
+        <div id="prof" class="card" style="margin-top:12px;"></div>
+    </div>
+
+    <nav>
+        <button onclick="tab('home')" id="nh" class="active">🏠 مزایده‌ها</button>
+        <button onclick="tab('create')" id="nc">➕ ثبت کالا</button>
+        <button onclick="tab('prof')" id="np">👤 پروفایل</button>
+    </nav>
+
+    <script>
+        let u = localStorage.getItem('u') || null;
+        let data = JSON.parse(localStorage.getItem('data')) || [
+            { id: 1, title: 'کنسول پلی‌استیشن ۵', price: 28500000, end: Date.now() + 300000, seller: '09121111111' },
+            { id: 2, title: 'گوشی آیفون ۱۳ پرو مکس', price: 44000000, end: Date.now() + 600000, seller: '09192222222' }
+        ];
+        function save() { localStorage.setItem('data', JSON.stringify(data)); }
+        function tab(t) {
+            ['home','detail','create','prof'].forEach(x => { const el = document.getElementById('v-'+x); if(el) el.classList.add('hidden'); });
+            ['nh','nc','np'].forEach(x => document.getElementById(x)?.classList.remove('active'));
+            if(t==='home'){ document.getElementById('v-home').classList.remove('hidden'); document.getElementById('nh').classList.add('active'); render(); }
+            if(t==='create'){ document.getElementById('v-create').classList.remove('hidden'); document.getElementById('nc').classList.add('active'); }
+            if(t==='prof'){ document.getElementById('v-prof').classList.remove('hidden'); document.getElementById('np').classList.add('active'); rProf(); }
+        }
+        function render() {
+            document.getElementById('list').innerHTML = data.map(i => `
+                <div class="card" onclick="openItem(${i.id})">
+                    <div style="display:flex; justify-content:space-between;"><small>کد #${i.id}</small><span class="timer" data-t="${i.end}">...</span></div>
+                    <h4 style="margin:8px 0;">${i.title}</h4>
+                    <p style="color:var(--primary); font-size:1.1rem; font-weight:bold;">${i.price.toLocaleString()} تومان</p>
+                </div>
+            `).join('');
+        }
+        function openItem(id) {
+            const i = data.find(x => x.id === id);
+            document.getElementById('v-home').classList.add('hidden');
+            document.getElementById('v-detail').classList.remove('hidden');
+            document.getElementById('detail').innerHTML = `
+                <div class="card">
+                    <h2>${i.title}</h2>
+                    <p style="color:var(--muted); margin:6px 0;">فروشنده: ${i.seller}</p>
+                    <h1 style="color:var(--primary); margin:12px 0;">${i.price.toLocaleString()} تومان</h1>
+                    <p>زمان باقی‌مانده: <span class="timer" data-t="${i.end}">...</span></p>
+                    <small style="color:#ef4444;">قانون ضدتقلب: پیشنهاد در ۲ دقیقه پایانی، ۱۲۰ ثانیه وقت اضافه می‌کند.</small>
+                    <input type="number" id="bid" placeholder="پیشنهاد بالاتر (تومان)" style="margin-top:12px;">
+                    <button class="btn" onclick="bid(${i.id})">چکش بزن!</button>
+                </div>
+            `;
+        }
+        function bid(id) {
+            if(!u) { alert('اول در بخش پروفایل وارد شو'); tab('prof'); return; }
+            const val = parseInt(document.getElementById('bid').value);
+            const i = data.find(x => x.id === id);
+            if(!val || val <= i.price) return alert('مبلغ باید بیشتر باشد');
+            i.price = val;
+            if (i.end - Date.now() < 120000) i.end = Date.now() + 120000;
+            save(); openItem(id);
+        }
+        function create(e) {
+            e.preventDefault();
+            if(!u) { alert('اول وارد حساب کاربری شو'); tab('prof'); return; }
+            data.unshift({ id: Date.now()%10000, title: document.getElementById('ct').value, price: parseInt(document.getElementById('cp').value), end: Date.now() + (parseInt(document.getElementById('cd').value)*60000), seller: u });
+            save(); alert('ثبت شد!'); tab('home');
+        }
+        function rProf() {
+            document.getElementById('prof').innerHTML = !u ? `
+                <label>شماره موبایل:</label><input id="ph" placeholder="09xxxxxxxxx">
+                <button class="btn" onclick="u=document.getElementById('ph').value; localStorage.setItem('u',u); rProf();">ورود</button>
+            ` : `
+                <p>شماره شما: <b>${u}</b></p>
+                <button class="btn btn-sec" style="margin-top:12px;" onclick="localStorage.removeItem('u'); u=null; rProf();">خروج</button>
+            `;
+        }
+        setInterval(() => {
+            document.querySelectorAll('.timer').forEach(el => {
+                const diff = parseInt(el.getAttribute('data-t')) - Date.now();
+                el.innerText = diff <= 0 ? 'پایان یافت' : `${Math.floor(diff/60000)}:${Math.floor((diff%60000)/1000).toString().padStart(2,'0')}`;
+            });
+        }, 1000);
+        render();
+    </script>
+</body>
+</html>
