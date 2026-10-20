@@ -1,133 +1,535 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>چکش | سامانه مزایده آنلاین</title>
+    <title>چکش | سامانه هوشمند حراج و مزایده آنلاین</title>
     <style>
-        :root { --primary: #f59e0b; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --muted: #94a3b8; }
+        :root {
+            --primary: #f59e0b;
+            --primary-hover: #d97706;
+            --bg: #0b0f19;
+            --card-bg: #151d30;
+            --card-border: #232f48;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; padding-bottom: 80px; }
-        header { background: var(--card); padding: 14px; border-radius: 12px; text-align: center; margin-bottom: 16px; border: 1px solid #334155; }
-        header h1 { color: var(--primary); font-size: 1.3rem; }
-        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid #334155; }
-        .btn { background: var(--primary); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 1rem; }
-        .btn-sec { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-        input { width: 100%; padding: 12px; margin: 8px 0 14px 0; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; }
-        .timer { color: #ef4444; font-weight: bold; font-family: monospace; }
-        nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid #334155; }
-        nav button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.9rem; }
+        body { background: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 80px; }
+
+        /* نوار بالای سایت با لوگوی چکش طلایی */
+        header {
+            background: #101726;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: radial-gradient(circle, #fde68a 0%, #d97706 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+        .brand-logo svg { width: 24px; height: 24px; fill: #0b0f19; }
+        .brand-text h1 { font-size: 1.15rem; color: #fff; font-weight: 800; }
+        .brand-text span { font-size: 0.65rem; color: var(--primary); display: block; }
+
+        .container { padding: 14px; max-width: 650px; margin: 0 auto; }
+
+        /* سرچ بار سبک دیوار */
+        .search-box {
+            position: relative;
+            margin-bottom: 14px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        /* کارت مزایده شبیه دیوار */
+        .auction-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 14px;
+            display: flex;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+        .auction-card:active { transform: scale(0.98); }
+        .card-img-wrapper {
+            width: 120px;
+            height: 120px;
+            flex-shrink: 0;
+            background: #1e293b;
+            position: relative;
+        }
+        .card-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .badge-live {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(239, 68, 68, 0.9);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+        .card-info {
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+        }
+        .card-title { font-size: 0.95rem; font-weight: bold; line-height: 1.4; margin-bottom: 4px; }
+        .card-meta { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 8px; }
+        .card-price-row { margin-top: 6px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .price-label { font-size: 0.7rem; color: var(--text-muted); }
+        .price-val { font-size: 1.05rem; font-weight: bold; color: var(--primary); }
+        .timer-badge { font-size: 0.75rem; color: var(--danger); font-family: monospace; font-weight: bold; }
+
+        /* دکمه‌ها و فرم‌ها */
+        .btn {
+            background: var(--primary);
+            color: #0b0f19;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0 14px 0;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* نوار ناوبری پایین */
+        nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #101726;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+        }
+        nav button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
         nav button.active { color: var(--primary); font-weight: bold; }
+        nav button svg { width: 22px; height: 22px; fill: currentColor; }
+
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <header><h1>🔨 چکش — سامانه مزایده آنلاین</h1></header>
 
-    <div id="v-home">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3>مزایده‌های جاری</h3>
-            <button class="btn" style="width:auto; padding:6px 12px;" onclick="tab('create')">+ ثبت مزایده</button>
+    <!-- نوار هدر با لوگوی چکش طلایی -->
+    <header>
+        <div class="brand">
+            <div class="brand-logo">
+                <!-- آیکون وکتور چکش طلایی -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6-4.6 4.6-1.4-1.4a1 1 0 0 0-1.4 0l-5.6 5.6a1 1 0 0 0 1.4 1.4l5.6-5.6 1.4 1.4a1 1 0 0 0 1.4 0l4.6-4.6 1.6 1.6a1 1 0 0 0 1.4-1.4l-3-3a1 1 0 0 0-1.4 0l-.3.3-1.6-1.6.3-.3a1 1 0 0 0 0-1.4l-2-2z"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>چَکُش</h1>
+                <span>حراج و مزایده در لحظه</span>
+            </div>
         </div>
-        <div id="list"></div>
+        <button class="btn" style="width: auto; padding: 6px 12px; font-size: 0.8rem;" onclick="tab('create')">+ ثبت آگهی</button>
+    </header>
+
+    <div class="container">
+
+        <!-- صفحه اصلی (لیست به سبک دیوار) -->
+        <div id="v-home">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="جستجو در میان کالاهای مزایده..." oninput="filterAuctions()">
+            </div>
+            <div id="list"></div>
+        </div>
+
+        <!-- صفحه جزئیات کالا -->
+        <div id="v-detail" class="hidden">
+            <button class="btn btn-outline" style="margin-bottom: 12px;" onclick="tab('home')">← بازگشت به آگهی‌ها</button>
+            <div id="detail-content"></div>
+        </div>
+
+        <!-- صفحه ثبت کالا مثل دیوار -->
+        <div id="v-create" class="hidden">
+            <h2 style="margin-bottom: 14px; font-size: 1.1rem; color: var(--primary);">ثبت مزایده جدید</h2>
+            <form onsubmit="handleCreate(event)">
+                <label>عنوان کالا *</label>
+                <input id="c-title" placeholder="مثلاً: ساعت رولکس اصل یا PS5" required>
+
+                <label>عکس کالا (از گالری گوشی انتخاب کنید)</label>
+                <input type="file" id="c-file" accept="image/*" onchange="previewImg(event)">
+                <img id="img-preview" style="width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; display: none;">
+
+                <label>توضیحات کامل کالا (وضعیت، مشخصات فنی و گارانتی) *</label>
+                <textarea id="c-desc" placeholder="در مورد سلامت کالا، مدت کارکرد و علت فروش بنویسید..." required></textarea>
+
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>شهر *</label>
+                        <input id="c-city" placeholder="مثلاً تهران، زنجان، مشهد" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>دسته‌بندی</label>
+                        <select id="c-cat">
+                            <option>کالای دیجیتال</option>
+                            <option>وسایل نقلیه</option>
+                            <option>ساعت و اکسسوری</option>
+                            <option>لوازم خانگی</option>
+                            <option>کلکسیونی و عتیقه</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label>قیمت پایه شروع مزایده (تومان) *</label>
+                <input type="number" id="c-price" placeholder="مثلاً: 12000000" required>
+
+                <label>مدت زمان حراج (دقیقه) *</label>
+                <input type="number" id="c-time" value="30" required>
+
+                <button type="submit" class="btn" style="margin-top: 8px;">🔨 انتشار مزایده در چکش</button>
+            </form>
+        </div>
+
+        <!-- پروفایل کاربر -->
+        <div id="v-prof" class="hidden">
+            <h2 style="margin-bottom: 12px; font-size: 1.1rem;">پروفایل کاربری</h2>
+            <div id="prof-content"></div>
+        </div>
+
     </div>
 
-    <div id="v-detail" class="hidden">
-        <button class="btn btn-sec" style="margin-bottom:12px;" onclick="tab('home')">← بازگشت</button>
-        <div id="detail"></div>
-    </div>
-
-    <div id="v-create" class="hidden">
-        <h3>ثبت کالای جدید</h3>
-        <form onsubmit="create(event)">
-            <label>نام کالا:</label><input id="ct" required placeholder="مثلاً ساعت هوشمند">
-            <label>قیمت پایه (تومان):</label><input type="number" id="cp" required placeholder="مثلاً 5000000">
-            <label>مدت زمان (دقیقه):</label><input type="number" id="cd" value="10" required>
-            <button class="btn" type="submit">انتشار مزایده</button>
-        </form>
-    </div>
-
-    <div id="v-prof" class="hidden">
-        <h3>حساب کاربری</h3>
-        <div id="prof" class="card" style="margin-top:12px;"></div>
-    </div>
-
+    <!-- نوار پایین برنامه -->
     <nav>
-        <button onclick="tab('home')" id="nh" class="active">🏠 مزایده‌ها</button>
-        <button onclick="tab('create')" id="nc">➕ ثبت کالا</button>
-        <button onclick="tab('prof')" id="np">👤 پروفایل</button>
+        <button onclick="tab('home')" id="b-home" class="active">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            آگهی‌ها
+        </button>
+        <button onclick="tab('create')" id="b-create">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            ثبت مزایده
+        </button>
+        <button onclick="tab('prof')" id="b-prof">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            حساب من
+        </button>
     </nav>
 
     <script>
-        let u = localStorage.getItem('u') || null;
-        let data = JSON.parse(localStorage.getItem('data')) || [
-            { id: 1, title: 'کنسول پلی‌استیشن ۵', price: 28500000, end: Date.now() + 300000, seller: '09121111111' },
-            { id: 2, title: 'گوشی آیفون ۱۳ پرو مکس', price: 44000000, end: Date.now() + 600000, seller: '09192222222' }
+        let user = localStorage.getItem('chakosh_user') || null;
+        let uploadedBase64 = null;
+
+        // نمونه‌های اولیه با عکس، شهر و توضیحات واقعی
+        let auctions = JSON.parse(localStorage.getItem('chakosh_db')) || [
+            {
+                id: 101,
+                title: "کنسول پلی‌استیشن ۵ ریجن اروپا با دو دسته اصلی",
+                city: "تهران",
+                category: "کالای دیجیتال",
+                desc: "دستگاه در حد کاملاً نو، مجموعاً کمتر از ۳۰ ساعت روشن بوده. دارای یک دسته اضافه اصلی سفید، کارتن و فاکتور خرید معتبر بدون خط و خش.",
+                price: 28500000,
+                endTime: Date.now() + 900000,
+                seller: "09121112233",
+                img: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500&q=80",
+                bids: 5
+            },
+            {
+                id: 102,
+                title: "ساعت کلاسیک امگا مدل اتوماتیک لیمیتد",
+                city: "زنجان",
+                category: "ساعت و اکسسوری",
+                desc: "موتور سوییسی اصل به شرط کارشناسی، شیشه ضدخش یاقوت کبود، بند چرم طبیعی دست‌دوز به همراه جعبه چوبی فابریک.",
+                price: 15200000,
+                endTime: Date.now() + 1500000,
+                seller: "09193334455",
+                img: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=500&q=80",
+                bids: 8
+            }
         ];
-        function save() { localStorage.setItem('data', JSON.stringify(data)); }
+
+        function saveDB() { localStorage.setItem('chakosh_db', JSON.stringify(auctions)); }
+
         function tab(t) {
-            ['home','detail','create','prof'].forEach(x => { const el = document.getElementById('v-'+x); if(el) el.classList.add('hidden'); });
-            ['nh','nc','np'].forEach(x => document.getElementById(x)?.classList.remove('active'));
-            if(t==='home'){ document.getElementById('v-home').classList.remove('hidden'); document.getElementById('nh').classList.add('active'); render(); }
-            if(t==='create'){ document.getElementById('v-create').classList.remove('hidden'); document.getElementById('nc').classList.add('active'); }
-            if(t==='prof'){ document.getElementById('v-prof').classList.remove('hidden'); document.getElementById('np').classList.add('active'); rProf(); }
+            ['home', 'detail', 'create', 'prof'].forEach(id => {
+                const el = document.getElementById('v-' + id);
+                if (el) el.classList.add('hidden');
+            });
+            ['home', 'create', 'prof'].forEach(id => {
+                const btn = document.getElementById('b-' + id);
+                if (btn) btn.classList.remove('active');
+            });
+
+            if (t === 'home') {
+                document.getElementById('v-home').classList.remove('hidden');
+                document.getElementById('b-home').classList.add('active');
+                renderList(auctions);
+            } else if (t === 'create') {
+                document.getElementById('v-create').classList.remove('hidden');
+                document.getElementById('b-create').classList.add('active');
+            } else if (t === 'prof') {
+                document.getElementById('v-prof').classList.remove('hidden');
+                document.getElementById('b-prof').classList.add('active');
+                renderProfile();
+            }
         }
-        function render() {
-            document.getElementById('list').innerHTML = data.map(i => `
-                <div class="card" onclick="openItem(${i.id})">
-                    <div style="display:flex; justify-content:space-between;"><small>کد #${i.id}</small><span class="timer" data-t="${i.end}">...</span></div>
-                    <h4 style="margin:8px 0;">${i.title}</h4>
-                    <p style="color:var(--primary); font-size:1.1rem; font-weight:bold;">${i.price.toLocaleString()} تومان</p>
+
+        function renderList(items) {
+            const container = document.getElementById('list');
+            if (items.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:30px;">موردی یافت نشد.</p>';
+                return;
+            }
+            container.innerHTML = items.map(item => `
+                <div class="auction-card" onclick="openDetail(${item.id})">
+                    <div class="card-img-wrapper">
+                        <img src="${item.img || 'https://via.placeholder.com/150?text=چکش'}" alt="${item.title}">
+                        <span class="badge-live">زنده</span>
+                    </div>
+                    <div class="card-info">
+                        <div>
+                            <div class="card-title">${item.title}</div>
+                            <div class="card-meta">
+                                <span>📍 ${item.city}</span>
+                                <span>🏷️ ${item.category}</span>
+                            </div>
+                        </div>
+                        <div class="card-price-row">
+                            <div>
+                                <span class="price-label">پیشنهاد فعلی:</span><br>
+                                <span class="price-val">${item.price.toLocaleString()} ت</span>
+                            </div>
+                            <span class="timer-badge" data-end="${item.endTime}">...</span>
+                        </div>
+                    </div>
                 </div>
             `).join('');
         }
-        function openItem(id) {
-            const i = data.find(x => x.id === id);
-            document.getElementById('v-home').classList.add('hidden');
+
+        function filterAuctions() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const filtered = auctions.filter(a => a.title.toLowerCase().includes(query) || a.city.toLowerCase().includes(query));
+            renderList(filtered);
+        }
+
+        function openDetail(id) {
+            const item = auctions.find(a => a.id === id);
+            document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
             document.getElementById('v-detail').classList.remove('hidden');
-            document.getElementById('detail').innerHTML = `
-                <div class="card">
-                    <h2>${i.title}</h2>
-                    <p style="color:var(--muted); margin:6px 0;">فروشنده: ${i.seller}</p>
-                    <h1 style="color:var(--primary); margin:12px 0;">${i.price.toLocaleString()} تومان</h1>
-                    <p>زمان باقی‌مانده: <span class="timer" data-t="${i.end}">...</span></p>
-                    <small style="color:#ef4444;">قانون ضدتقلب: پیشنهاد در ۲ دقیقه پایانی، ۱۲۰ ثانیه وقت اضافه می‌کند.</small>
-                    <input type="number" id="bid" placeholder="پیشنهاد بالاتر (تومان)" style="margin-top:12px;">
-                    <button class="btn" onclick="bid(${i.id})">چکش بزن!</button>
+
+            document.getElementById('detail-content').innerHTML = `
+                <div style="background:var(--card-bg); border-radius:14px; overflow:hidden; border:1px solid var(--card-border); padding-bottom:16px;">
+                    <img src="${item.img || 'https://via.placeholder.com/500?text=چکش'}" style="width:100%; max-height:260px; object-fit:cover;">
+                    <div style="padding:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.8rem; color:var(--text-muted);">کد حراج: #${item.id}</span>
+                            <span class="timer-badge" data-end="${item.endTime}" style="font-size:0.95rem;">...</span>
+                        </div>
+                        <h2 style="font-size:1.2rem; margin-bottom:8px;">${item.title}</h2>
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">
+                            📍 شهر: <b>${item.city}</b> | دسته: <b>${item.category}</b>
+                        </div>
+
+                        <div style="background:#0b0f19; padding:12px; border-radius:10px; margin-bottom:16px; border:1px solid var(--card-border);">
+                            <div style="font-size:0.8rem; color:var(--text-muted);">بالاترین پیشنهاد تا این لحظه:</div>
+                            <div style="font-size:1.5rem; font-weight:bold; color:var(--primary); margin-top:4px;">
+                                ${item.price.toLocaleString()} تومان
+                            </div>
+                            <div style="font-size:0.75rem; color:var(--danger); margin-top:6px;">
+                                ⚡ قانون ضدتبانی: ثبت پیشنهاد در ۲ دقیقه آخر، ۲ دقیقه وقت اضافه می‌آورد.
+                            </div>
+                        </div>
+
+                        <h3 style="font-size:0.95rem; margin-bottom:6px;">توضیحات و مشخصات کالا:</h3>
+                        <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.6; white-space:pre-line; margin-bottom:18px;">
+                            ${item.desc}
+                        </p>
+
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">فروشنده: ${item.seller}</div>
+
+                        <div style="display:flex; gap:8px;">
+                            <input type="number" id="bid-input" placeholder="مبلغ پیشنهادی شما (تومان)" style="margin:0;">
+                            <button class="btn" style="width:auto; padding:12px 20px; white-space:nowrap;" onclick="submitBid(${item.id})">چَکُش بزن!</button>
+                        </div>
+                    </div>
                 </div>
             `;
         }
-        function bid(id) {
-            if(!u) { alert('اول در بخش پروفایل وارد شو'); tab('prof'); return; }
-            const val = parseInt(document.getElementById('bid').value);
-            const i = data.find(x => x.id === id);
-            if(!val || val <= i.price) return alert('مبلغ باید بیشتر باشد');
-            i.price = val;
-            if (i.end - Date.now() < 120000) i.end = Date.now() + 120000;
-            save(); openItem(id);
+
+        function submitBid(id) {
+            if (!user) { alert('برای شرکت در مزایده، لطفاً ابتدا شماره همراه خود را وارد کنید.'); tab('prof'); return; }
+            const amount = parseInt(document.getElementById('bid-input').value);
+            const item = auctions.find(a => a.id === id);
+
+            if (!amount || amount <= item.price) {
+                alert('پیشنهاد شما باید حداقل ۱۰۰ هزار تومان بالاتر از مبلغ فعلی باشد!');
+                return;
+            }
+
+            item.price = amount;
+            item.bids++;
+            // قانون ضدتبانی ۲ دقیقه پایانی
+            if (item.endTime - Date.now() < 120000) {
+                item.endTime = Date.now() + 120000;
+                alert('⚡ عالی! چون در ۲ دقیقه پایانی پیشنهاد دادی، ۱۲۰ ثانیه به زمان مزایده اضافه شد!');
+            } else {
+                alert('🔨 پیشنهاد شما با موفقیت به عنوان بالاترین قیمت ثبت شد!');
+            }
+            saveDB();
+            openDetail(id);
         }
-        function create(e) {
+
+        function previewImg(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    uploadedBase64 = evt.target.result;
+                    const preview = document.getElementById('img-preview');
+                    preview.src = uploadedBase64;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleCreate(e) {
             e.preventDefault();
-            if(!u) { alert('اول وارد حساب کاربری شو'); tab('prof'); return; }
-            data.unshift({ id: Date.now()%10000, title: document.getElementById('ct').value, price: parseInt(document.getElementById('cp').value), end: Date.now() + (parseInt(document.getElementById('cd').value)*60000), seller: u });
-            save(); alert('ثبت شد!'); tab('home');
+            if (!user) { alert('ابتدا شماره موبایل خود را در حساب کاربری ثبت کنید.'); tab('prof'); return; }
+
+            const newAuction = {
+                id: Math.floor(100 + Math.random() * 900),
+                title: document.getElementById('c-title').value,
+                desc: document.getElementById('c-desc').value,
+                city: document.getElementById('c-city').value,
+                category: document.getElementById('c-cat').value,
+                price: parseInt(document.getElementById('c-price').value),
+                endTime: Date.now() + (parseInt(document.getElementById('c-time').value) * 60000),
+                seller: user,
+                img: uploadedBase64 || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&q=80',
+                bids: 0
+            };
+
+            auctions.unshift(newAuction);
+            saveDB();
+            alert('تبریک! آگهی مزایده شما با موفقیت در چکش منتشر شد.');
+            uploadedBase64 = null;
+            document.getElementById('img-preview').style.display = 'none';
+            tab('home');
         }
-        function rProf() {
-            document.getElementById('prof').innerHTML = !u ? `
-                <label>شماره موبایل:</label><input id="ph" placeholder="09xxxxxxxxx">
-                <button class="btn" onclick="u=document.getElementById('ph').value; localStorage.setItem('u',u); rProf();">ورود</button>
-            ` : `
-                <p>شماره شما: <b>${u}</b></p>
-                <button class="btn btn-sec" style="margin-top:12px;" onclick="localStorage.removeItem('u'); u=null; rProf();">خروج</button>
-            `;
+
+        function renderProfile() {
+            const c = document.getElementById('prof-content');
+            if (!user) {
+                c.innerHTML = `
+                    <div style="background:var(--card-bg); padding:16px; border-radius:12px; border:1px solid var(--card-border);">
+                        <p style="margin-bottom:12px; font-size:0.9rem;">برای ثبت آگهی یا پیشنهاد مزایده وارد شوید:</p>
+                        <input type="tel" id="user-phone" placeholder="شماره موبایل: 0912xxxxxxx">
+                        <button class="btn" onclick="login()">ورود / ثبت‌نام</button>
+                    </div>
+                `;
+            } else {
+                c.innerHTML = `
+                    <div style="background:var(--card-bg); padding:16px; border-radius:12px; border:1px solid var(--card-border);">
+                        <p style="font-size:0.9rem; color:var(--text-muted);">شماره همراه فعال:</p>
+                        <h3 style="color:var(--primary); margin:8px 0 16px 0;">📱 ${user}</h3>
+                        <button class="btn btn-outline" onclick="logout()">خروج از حساب</button>
+                    </div>
+                `;
+            }
         }
+
+        function login() {
+            const p = document.getElementById('user-phone').value.trim();
+            if (p.length < 10) return alert('شماره معتبر وارد کنید');
+            user = p;
+            localStorage.setItem('chakosh_user', user);
+            renderProfile();
+            alert('خوش آمدید!');
+        }
+
+        function logout() {
+            localStorage.removeItem('chakosh_user');
+            user = null;
+            renderProfile();
+        }
+
+        // تایمر زنده
         setInterval(() => {
-            document.querySelectorAll('.timer').forEach(el => {
-                const diff = parseInt(el.getAttribute('data-t')) - Date.now();
-                el.innerText = diff <= 0 ? 'پایان یافت' : `${Math.floor(diff/60000)}:${Math.floor((diff%60000)/1000).toString().padStart(2,'0')}`;
+            document.querySelectorAll('.timer-badge').forEach(el => {
+                const diff = parseInt(el.getAttribute('data-end')) - Date.now();
+                if (diff <= 0) {
+                    el.innerText = 'پایان یافت';
+                    el.style.color = 'var(--text-muted)';
+                } else {
+                    const m = Math.floor(diff / 60000);
+                    const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+                    el.innerText = `⏱ ${m}:${s}`;
+                }
             });
         }, 1000);
-        render();
+
+        tab('home');
     </script>
 </body>
 </html>
